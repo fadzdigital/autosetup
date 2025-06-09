@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # ====================================================================
-# Skrip Otomatisasi Setup VPS Profesional
-# Versi: 2.0
-# Penulis: fadzTech
-# Deskripsi: Setup otomatis lengkap dengan penanganan error & monitoring
+# VPS Automation Setup Script
+# Version: 1.0
+# Author: MikkuChan
+# Description: Complete automation setup with error handling & monitoring
 # ====================================================================
 
-# Definisi warna untuk output profesional
+# Color definitions for output
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
 readonly YELLOW='\033[1;33m'
@@ -19,7 +19,7 @@ readonly BOLD='\033[1m'
 readonly UNDERLINE='\033[4m'
 readonly RESET='\033[0m'
 
-# Ikon untuk pengalaman visual lebih baik
+# Icons for better visual experience
 readonly SUCCESS="✅"
 readonly ERROR="❌"
 readonly WARNING="⚠️"
@@ -29,14 +29,14 @@ readonly GEAR="⚙️"
 readonly SHIELD="🛡️"
 readonly CLOCK="🕐"
 
-# Variabel global
-SCRIPT_NAME="Setup Otomatisasi VPS fadzTech"
-SCRIPT_VERSION="2.0"
+# Global variables
+SCRIPT_NAME="VPS Automation Setup"
+SCRIPT_VERSION="1.0"
 LOG_FILE="/var/log/vps_setup.log"
 ERROR_COUNT=0
 SETUP_START_TIME=$(date +%s)
 
-# Fungsi logging dengan timestamp dan warna
+# Logging function with timestamp and colors
 log() {
     local level=$1
     shift
@@ -48,10 +48,10 @@ log() {
             echo -e "${CYAN}${INFO} [${timestamp}] INFO: ${message}${RESET}" | tee -a "$LOG_FILE"
             ;;
         "SUCCESS")
-            echo -e "${GREEN}${SUCCESS} [${timestamp}] SUKSES: ${message}${RESET}" | tee -a "$LOG_FILE"
+            echo -e "${GREEN}${SUCCESS} [${timestamp}] SUCCESS: ${message}${RESET}" | tee -a "$LOG_FILE"
             ;;
         "WARNING")
-            echo -e "${YELLOW}${WARNING} [${timestamp}] PERINGATAN: ${message}${RESET}" | tee -a "$LOG_FILE"
+            echo -e "${YELLOW}${WARNING} [${timestamp}] WARNING: ${message}${RESET}" | tee -a "$LOG_FILE"
             ;;
         "ERROR")
             echo -e "${RED}${ERROR} [${timestamp}] ERROR: ${message}${RESET}" | tee -a "$LOG_FILE"
@@ -63,21 +63,21 @@ log() {
     esac
 }
 
-# Banner profesional dengan info sistem
+#  banner with system info
 show_banner() {
     clear
     echo -e "${BOLD}${CYAN}"
     cat << "EOF"
 ╔═══════════════════════════════════════════════════════════════════╗
 ║                                                                   ║
-║ ███████╗ █████╗ ██████╗ ███████╗████████╗███████╗ ██████╗██╗  ██╗║
-║ ██╔════╝██╔══██╗██╔══██╗██╔════╝╚══██╔══╝██╔════╝██╔════╝╚██╗██╔╝║
-║ █████╗  ███████║██║  ██║█████╗     ██║   █████╗  ██║      ╚███╔╝ ║
-║ ██╔══╝  ██╔══██║██║  ██║██╔══╝     ██║   ██╔══╝  ██║      ██╔██╗ ║
-║ ██║     ██║  ██║██████╔╝███████╗   ██║   ███████╗╚██████╗██╔╝ ██╗║
-║ ╚═╝     ╚═╝  ╚═╝╚═════╝ ╚══════╝   ╚═╝   ╚══════╝ ╚═════╝╚═╝  ╚═╝║
+║  ██╗   ██╗██████╗ ███████╗     █████╗ ██╗   ██╗████████╗ ██████╗  ║
+║  ██║   ██║██╔══██╗██╔════╝    ██╔══██╗██║   ██║╚══██╔══╝██╔═══██╗ ║
+║  ██║   ██║██████╔╝███████╗    ███████║██║   ██║   ██║   ██║   ██║ ║
+║  ╚██╗ ██╔╝██╔═══╝ ╚════██║    ██╔══██║██║   ██║   ██║   ██║   ██║ ║
+║   ╚████╔╝ ██║     ███████║    ██║  ██║╚██████╔╝   ██║   ╚██████╔╝ ║
+║    ╚═══╝  ╚═╝     ╚══════╝    ╚═╝  ╚═╝ ╚═════╝    ╚═╝    ╚═════╝  ║
 ║                                                                   ║
-║              SOLUSI OTOMATISASI VPS PROFESIONAL                   ║
+║               AUTOMATION SETUP SCRIPT                             ║
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝
 EOF
@@ -85,64 +85,64 @@ EOF
     
     log "HEADER" "═══════════════════════════════════════════════════════════"
     log "HEADER" "    ${SCRIPT_NAME} v${SCRIPT_VERSION}"
-    log "HEADER" "    Sistem: $(uname -s) $(uname -r)"
+    log "HEADER" "    System: $(uname -s) $(uname -r)"
     log "HEADER" "    Hostname: $(hostname)"
-    log "HEADER" "    Tanggal: $(date)"
+    log "HEADER" "    Date: $(date)"
     log "HEADER" "═══════════════════════════════════════════════════════════"
 }
 
-# Penanganan error yang ditingkatkan
+#  error handling
 handle_error() {
     local exit_code=$1
     local line_number=$2
     local command="$3"
     
-    log "ERROR" "Perintah gagal dengan kode $exit_code di baris $line_number: $command"
+    log "ERROR" "Command failed with exit code $exit_code at line $line_number: $command"
     
-    # Tawarkan opsi pemulihan
-    echo -e "${YELLOW}${WARNING} Pilihan yang tersedia:${RESET}"
-    echo -e "${WHITE}1) Lanjutkan setup (lewati langkah ini)${RESET}"
-    echo -e "${WHITE}2) Coba lagi perintah yang gagal${RESET}"
-    echo -e "${WHITE}3) Keluar dari setup${RESET}"
+    # Offer recovery options
+    echo -e "${YELLOW}${WARNING} Would you like to:${RESET}"
+    echo -e "${WHITE}1) Continue with setup (skip this step)${RESET}"
+    echo -e "${WHITE}2) Retry the failed command${RESET}"
+    echo -e "${WHITE}3) Exit setup${RESET}"
     
-    read -p "Pilih opsi [1-3]: " choice
+    read -p "Choose option [1-3]: " choice
     case $choice in
-        1) log "WARNING" "Melanjutkan setup, melewati langkah yang gagal..." ;;
-        2) return 1 ;; # Sinyal untuk mencoba lagi
+        1) log "WARNING" "Continuing setup, skipping failed step..." ;;
+        2) return 1 ;; # Signal to retry
         3) exit 1 ;;
-        *) log "WARNING" "Pilihan tidak valid, melanjutkan..." ;;
+        *) log "WARNING" "Invalid choice, continuing..." ;;
     esac
 }
 
-# Setup penanganan error
+# Set up error trapping
 trap 'handle_error $? $LINENO "$BASH_COMMAND"' ERR
 
-# Validasi persyaratan sistem
+# Validate system requirements
 validate_system() {
-    log "INFO" "${GEAR} Memvalidasi persyaratan sistem..."
+    log "INFO" "${GEAR} Validating system requirements..."
     
-    # Cek apakah dijalankan sebagai root
+    # Check if running as root
     if [[ $EUID -ne 0 ]]; then
-        log "ERROR" "Skrip ini harus dijalankan sebagai root (gunakan sudo)"
+        log "ERROR" "This script must be run as root (use sudo)"
         exit 1
     fi
     
-    # Cek konektivitas internet
+    # Check internet connectivity
     if ! ping -c 1 google.com &> /dev/null; then
-        log "ERROR" "Tidak terdeteksi koneksi internet"
+        log "ERROR" "No internet connection detected"
         exit 1
     fi
     
-    # Cek ruang disk yang tersedia (minimal 1GB)
+    # Check available disk space (minimum 1GB)
     available_space=$(df / | awk 'NR==2 {print $4}')
     if [[ $available_space -lt 1048576 ]]; then
-        log "WARNING" "Ditemukan ruang disk rendah (kurang dari 1GB tersedia)"
+        log "WARNING" "Low disk space detected (less than 1GB available)"
     fi
     
-    log "SUCCESS" "Validasi sistem selesai"
+    log "SUCCESS" "System validation completed"
 }
 
-# Fungsi input aman untuk data sensitif
+# Secure input function for sensitive data
 secure_input() {
     local prompt="$1"
     local var_name="$2"
@@ -160,61 +160,61 @@ secure_input() {
             declare -g "$var_name=$input"
             break
         else
-            log "WARNING" "Input tidak boleh kosong. Silakan coba lagi."
+            log "WARNING" "Input cannot be empty. Please try again."
         fi
     done
 }
 
-# Buat konfigurasi bot telegram dengan keamanan yang ditingkatkan
+# Create telegram bot configuration with  security
 setup_telegram_config() {
-    log "INFO" "${GEAR} Menyiapkan konfigurasi bot Telegram..."
+    log "INFO" "${GEAR} Setting up Telegram bot configuration..."
     
-    # Buat struktur direktori aman
+    # Create secure directory structure
     mkdir -p /etc/telegram_bot
     chmod 700 /etc/telegram_bot
     
-    echo -e "${BOLD}${CYAN}Silakan berikan kredensial bot Telegram Anda:${RESET}"
+    echo -e "${BOLD}${CYAN}Please provide your Telegram bot credentials:${RESET}"
     
-    # Dapatkan token bot secara aman
-    secure_input "Masukkan Token Bot Telegram: " "BOT_TOKEN" "true"
-    secure_input "Masukkan Chat ID Telegram: " "CHAT_ID"
+    # Get bot token securely
+    secure_input "Enter your Telegram Bot Token: " "BOT_TOKEN" "true"
+    secure_input "Enter your Telegram Chat ID: " "CHAT_ID"
     
-    # Validasi format token (validasi dasar)
+    # Validate token format (basic validation)
     if [[ ! "$BOT_TOKEN" =~ ^[0-9]+:[A-Za-z0-9_-]+$ ]]; then
-        log "WARNING" "Format token bot tampaknya tidak benar, tetapi melanjutkan..."
+        log "WARNING" "Bot token format seems incorrect, but proceeding..."
     fi
     
-    # Tulis file konfigurasi
+    # Write configuration files
     echo "$BOT_TOKEN" > /etc/telegram_bot/bot_token
     echo "$CHAT_ID" > /etc/telegram_bot/chat_id
     
-    # Setel izin yang aman
+    # Set secure permissions
     chmod 600 /etc/telegram_bot/bot_token
     chmod 600 /etc/telegram_bot/chat_id
     
-    # Tes konektivitas telegram
+    # Test telegram connectivity
     if curl -s "https://api.telegram.org/bot$BOT_TOKEN/getMe" | grep -q '"ok":true'; then
-        log "SUCCESS" "Konfigurasi bot Telegram terverifikasi"
+        log "SUCCESS" "Telegram bot configuration verified"
     else
-        log "WARNING" "Tidak dapat memverifikasi bot Telegram (periksa token)"
+        log "WARNING" "Could not verify Telegram bot (check token)"
     fi
 }
 
-# Instal dan konfigurasi fail2ban dengan aturan khusus
+# Install and configure fail2ban with custom rules
 setup_fail2ban() {
-    log "INFO" "${SHIELD} Menginstal dan mengkonfigurasi Fail2Ban..."
+    log "INFO" "${SHIELD} Installing and configuring Fail2Ban..."
     
-    # Perbarui daftar paket
+    # Update package list
     apt update -qq
     
-    # Instal fail2ban
+    # Install fail2ban
     apt install fail2ban -y
     
-    # Mulai dan aktifkan fail2ban
+    # Start and enable fail2ban
     systemctl start fail2ban
     systemctl enable fail2ban
     
-    # Buat konfigurasi jail khusus
+    # Create custom jail configuration
     cat > /etc/fail2ban/jail.local << 'EOF'
 [DEFAULT]
 bantime = 3600
@@ -240,57 +240,57 @@ logpath = /var/log/nginx/access.log
 maxretry = 6
 EOF
     
-    # Restart fail2ban untuk menerapkan konfigurasi
+    # Restart fail2ban to apply configuration
     systemctl restart fail2ban
     
-    # Verifikasi status fail2ban
+    # Verify fail2ban status
     if systemctl is-active --quiet fail2ban; then
-        log "SUCCESS" "Fail2Ban terinstal dan dikonfigurasi dengan sukses"
+        log "SUCCESS" "Fail2Ban installed and configured successfully"
     else
-        log "ERROR" "Instalasi Fail2Ban gagal"
+        log "ERROR" "Fail2Ban installation failed"
         return 1
     fi
 }
 
-# Buat skrip autoreboot yang ditingkatkan dengan penanganan error yang lebih baik
+# Create  autoreboot script with better error handling
 create_autoreboot_script() {
-    log "INFO" "${GEAR} Membuat skrip auto-reboot yang ditingkatkan..."
+    log "INFO" "${GEAR} Creating  auto-reboot script..."
     
     cat > /root/autoreboot.sh << 'EOF'
 #!/bin/bash
 
-# Skrip Auto-Reboot yang Ditingkatkan dengan Fitur Profesional
-# Versi: 2.0
+#  Auto-Reboot Script with  Features
+# Version: 1.0
 
-# Definisi warna
+# Color definitions
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 RESET='\033[0m'
 
-# Konfigurasi
+# Configuration
 BOT_TOKEN=$(cat /etc/telegram_bot/bot_token 2>/dev/null)
 CHAT_ID=$(cat /etc/telegram_bot/chat_id 2>/dev/null)
 LOG_FILE="/var/log/autoreboot.log"
 
-# Pengumpulan informasi sistem
+# System information gathering
 VPS_NAME=$(hostname)
-IP_VPS=$(timeout 10 curl -s https://ipinfo.io/ip || echo "Tidak Diketahui")
-REGION_VPS=$(timeout 10 curl -s https://ipinfo.io/region || echo "Tidak Diketahui")
-ISP_VPS=$(timeout 10 curl -s https://ipinfo.io/org | cut -d " " -f 2- || echo "Tidak Diketahui")
+IP_VPS=$(timeout 10 curl -s https://ipinfo.io/ip || echo "Unknown")
+REGION_VPS=$(timeout 10 curl -s https://ipinfo.io/region || echo "Unknown")
+ISP_VPS=$(timeout 10 curl -s https://ipinfo.io/org | cut -d " " -f 2- || echo "Unknown")
 
-# Informasi waktu
+# Time information
 HARI=$(date +"%A")
 TANGGAL=$(date +"%Y-%m-%d")
 JAM_SEKARANG=$(date +"%H:%M:%S")
 
-# Fungsi logging
+# Logging function
 log_message() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
 }
 
-# Pengecekan layanan yang ditingkatkan dengan timeout
+#  service check with timeout
 check_service() {
     local service=$1
     local timeout=${2:-10}
@@ -302,14 +302,14 @@ check_service() {
     fi
 }
 
-# Kirim pesan telegram dengan mekanisme coba ulang
+# Send telegram message with retry mechanism
 send_telegram() {
     local message="$1"
     local max_retries=3
     local retry_count=0
     
     if [[ -z "$BOT_TOKEN" || -z "$CHAT_ID" ]]; then
-        log_message "ERROR: Kredensial Telegram tidak ditemukan"
+        log_message "ERROR: Telegram credentials not found"
         return 1
     fi
     
@@ -318,41 +318,41 @@ send_telegram() {
             -d chat_id="$CHAT_ID" \
             -d text="$message" \
             -d parse_mode=Markdown > /dev/null 2>&1; then
-            log_message "SUCCESS: Pesan Telegram terkirim"
+            log_message "SUCCESS: Telegram message sent"
             return 0
         else
             ((retry_count++))
-            log_message "WARNING: Percobaan pengiriman Telegram ke-$retry_count gagal"
+            log_message "WARNING: Telegram send attempt $retry_count failed"
             sleep 5
         fi
     done
     
-    log_message "ERROR: Gagal mengirim pesan telegram setelah $max_retries percobaan"
+    log_message "ERROR: Failed to send telegram message after $max_retries attempts"
     return 1
 }
 
-# Restart layanan dengan penanganan error
+# Service restart with error handling
 restart_service() {
     local service=$1
-    log_message "Merestart $service..."
+    log_message "Restarting $service..."
     
     if systemctl restart "$service" 2>/dev/null; then
-        log_message "SUCCESS: $service berhasil direstart"
+        log_message "SUCCESS: $service restarted"
         return 0
     else
-        log_message "ERROR: Gagal merestart $service"
+        log_message "ERROR: Failed to restart $service"
         return 1
     fi
 }
 
-# Operasi pasca-reboot
+# Post-reboot operations
 if [[ "$1" == "after_reboot" ]]; then
-    log_message "=== OPERASI PASCA-REBOOT DIMULAI ==="
+    log_message "=== POST-REBOOT OPERATIONS STARTED ==="
     
-    # Tunggu sistem stabil
+    # Wait for system to stabilize
     sleep 15
     
-    # Restart layanan kritis
+    # Restart critical services
     services=(
         "ssh"
         "nginx"
@@ -371,11 +371,11 @@ if [[ "$1" == "after_reboot" ]]; then
         if systemctl list-unit-files | grep -q "$service"; then
             restart_service "$service"
         else
-            log_message "INFO: Layanan $service tidak ditemukan, dilewati"
+            log_message "INFO: Service $service not found, skipping"
         fi
     done
     
-    # Operasi layanan tambahan untuk layanan UDP
+    # Additional service operations for UDP services
     for i in {1..3}; do
         service="udp-mini-$i"
         if systemctl list-unit-files | grep -q "$service"; then
@@ -386,7 +386,7 @@ if [[ "$1" == "after_reboot" ]]; then
         fi
     done
     
-    # Periksa status semua layanan
+    # Check all service statuses
     STATUS_SSH=$(check_service ssh)
     STATUS_NGINX=$(check_service nginx)
     STATUS_HAPROXY=$(check_service haproxy)
@@ -399,40 +399,40 @@ if [[ "$1" == "after_reboot" ]]; then
     STATUS_UDP2=$(check_service udp-mini-2)
     STATUS_UDP3=$(check_service udp-mini-3)
     
-    # Pemeriksaan sumber daya sistem
+    # System resource check
     UPTIME=$(uptime -p)
     LOAD_AVG=$(cat /proc/loadavg | awk '{print $1" "$2" "$3}')
     MEMORY_USAGE=$(free | grep Mem | awk '{printf "%.1f%%", $3/$2 * 100.0}')
     DISK_USAGE=$(df -h / | awk 'NR==2{printf "%s", $5}')
     
-    # Susun pesan pasca-reboot
-    POST_MESSAGE="🎯 **REBOOT SISTEM SELESAI** 🎯
+    # Compose post-reboot message
+    POST_MESSAGE="🎯 **SYSTEM REBOOT COMPLETED** 🎯
 
-╔══════════════════════════════╗
-║           INFO SERVER        ║
-╚══════════════════════════════╝
+╔═══════════════╗
+║           SERVER INFO       ║
+╚═══════════════╝
 🖥️ **Hostname:** \`$VPS_NAME\`
-🌐 **Alamat IP:** \`$IP_VPS\`
-📍 **Wilayah:** \`$REGION_VPS\`
+🌐 **IP Address:** \`$IP_VPS\`
+📍 **Region:** \`$REGION_VPS\`
 🏢 **ISP:** \`$ISP_VPS\`
 
-╔══════════════════════════════╗
-║        STATUS REBOOT         ║
-╚══════════════════════════════╝
-📅 **Tanggal:** $HARI, $TANGGAL
-🕐 **Waktu:** $JAM_SEKARANG
+╔═══════════════╗
+║      REBOOT STATUS      ║
+╚═══════════════╝
+📅 **Date:** $HARI, $TANGGAL
+🕐 **Time:** $JAM_SEKARANG
 ⏱️ **Uptime:** $UPTIME
 
-╔══════════════════════════════╗
-║       SUMBER DAYA SISTEM     ║
-╚══════════════════════════════╝
+╔═════════════════╗
+║    SYSTEM RESOURCE        ║
+╚═════════════════╝
 📊 **Load Average:** \`$LOAD_AVG\`
-💾 **Penggunaan Memori:** \`$MEMORY_USAGE\`
-💿 **Penggunaan Disk:** \`$DISK_USAGE\`
+💾 **Memory Usage:** \`$MEMORY_USAGE\`
+💿 **Disk Usage:** \`$DISK_USAGE\`
 
-╔══════════════════════════════╗
-║       STATUS LAYANAN         ║
-╚══════════════════════════════╝
+╔═══════════════╗
+║     SERVICES STATUS    ║
+╚═══════════════╝
 🔐 **SSH:** $STATUS_SSH
 🌐 **Nginx:** $STATUS_NGINX
 ⚖️ **HAProxy:** $STATUS_HAPROXY
@@ -445,155 +445,155 @@ if [[ "$1" == "after_reboot" ]]; then
 🎯 **UDP Mini 2:** $STATUS_UDP2
 🎯 **UDP Mini 3:** $STATUS_UDP3
 
-╔══════════════════════════════╗
-║     MONITORING AKTIF         ║
-╚══════════════════════════════╝
-🤖 **Otomatis oleh:** @fadzdigital
-✅ **Status:** Semua sistem beroperasi"
+╔══════════════════╗
+║     MONITORING ACTIVE       ║
+╚══════════════════╝
+🤖 **Automated by:** @fadzdigital
+✅ **Status:** All systems operational"
     
     send_telegram "$POST_MESSAGE"
-    log_message "=== OPERASI PASCA-REBOOT SELESAI ==="
+    log_message "=== POST-REBOOT OPERATIONS COMPLETED ==="
     exit 0
 fi
 
-# Notifikasi pra-reboot
-log_message "=== NOTIFIKASI PRA-REBOOT ==="
+# Pre-reboot notification
+log_message "=== PRE-REBOOT NOTIFICATION ==="
 
-PRE_MESSAGE="⚠️ **REBOOT SISTEM TERJADWAL** ⚠️
+PRE_MESSAGE="⚠️ **SCHEDULED SYSTEM REBOOT** ⚠️
 
-╔══════════════════════════════╗
-║           INFO SERVER        ║
-╚══════════════════════════════╝
+╔═══════════════╗
+║           SERVER INFO       ║
+╚═══════════════╝
 🖥️ **Hostname:** \`$VPS_NAME\`
-🌐 **Alamat IP:** \`$IP_VPS\`
-📍 **Wilayah:** \`$REGION_VPS\`
+🌐 **IP Address:** \`$IP_VPS\`
+📍 **Region:** \`$REGION_VPS\`
 🏢 **ISP:** \`$ISP_VPS\`
 
-╔══════════════════════════════╗
-║        JADWAL REBOOT         ║
-╚══════════════════════════════╝
-📅 **Tanggal:** $HARI, $TANGGAL
-🕐 **Waktu:** $JAM_SEKARANG
-⏳ **Aksi:** Reboot dalam 30 detik...
+╔══════════════════╗
+║        REBOOT SCHEDULE       ║
+╚══════════════════╝
+📅 **Date:** $HARI, $TANGGAL
+🕐 **Time:** $JAM_SEKARANG
+⏳ **Action:** Rebooting in 30 seconds...
 
-🔄 **Ini adalah reboot pemeliharaan otomatis**
-📱 **Anda akan menerima konfirmasi setelah selesai**
+🔄 **This is an automated maintenance reboot**
+📱 **You will receive confirmation once completed**
 
-🤖 **Otomatis oleh:** @fadzdigital"
+🤖 **Automated by:** @fadzdigital"
 
 send_telegram "$PRE_MESSAGE"
 
-# Tunggu sebelum reboot
-log_message "Menunggu 30 detik sebelum reboot..."
+# Wait before rebooting
+log_message "Waiting 30 seconds before reboot..."
 sleep 30
 
-# Lakukan reboot
-log_message "Memulai reboot sistem..."
+# Perform reboot
+log_message "Initiating system reboot..."
 /sbin/reboot
 EOF
     
-    # Buat skrip dapat dieksekusi
+    # Make the script executable
     chmod +x /root/autoreboot.sh
     
-    log "SUCCESS" "Skrip auto-reboot berhasil dibuat"
+    log "SUCCESS" "Auto-reboot script created successfully"
 }
 
-# Setup crontab untuk reboot terjadwal
+# Setup crontab for scheduled reboots
 setup_crontab() {
-    log "INFO" "${CLOCK} Menyiapkan tugas terjadwal..."
+    log "INFO" "${CLOCK} Setting up scheduled tasks..."
     
-    # Backup crontab yang ada
+    # Backup existing crontab
     crontab -l > /tmp/crontab_backup 2>/dev/null || true
     
-    # Buat entri crontab baru
+    # Create new crontab entries
     cat > /tmp/new_crontab << 'EOF'
-# Reboot otomatis sistem (3 kali sehari)
+# Automated system reboots (3 times daily)
 0 0 * * * /bin/bash /root/autoreboot.sh >/dev/null 2>&1
 0 5 * * * /bin/bash /root/autoreboot.sh >/dev/null 2>&1
 0 18 * * * /bin/bash /root/autoreboot.sh >/dev/null 2>&1
 
-# Jadwal backup (setiap 2 jam)
+# Backup schedule (every 2 hours)
 0 0,12,2,14,5,17,7,19,9,21 * * * /usr/local/sbin/backup >/dev/null 2>&1
 
-# Pemantauan sistem (setiap 30 menit)
-*/30 * * * * /usr/bin/systemctl is-system-running --quiet || echo "Masalah sistem terdeteksi pada $(date)" >> /var/log/system_alerts.log
+# System monitoring (every 30 minutes)
+*/30 * * * * /usr/bin/systemctl is-system-running --quiet || echo "System issues detected at $(date)" >> /var/log/system_alerts.log
 
-# Rotasi log (setiap hari jam 2 AM)
+# Log rotation (daily at 2 AM)
 0 2 * * * /usr/sbin/logrotate /etc/logrotate.conf >/dev/null 2>&1
 EOF
     
-    # Instal crontab baru
+    # Install new crontab
     crontab /tmp/new_crontab
     
-    # Buat skrip backup dapat dieksekusi jika ada
+    # Make backup script executable if it exists
     if [[ -f /usr/local/sbin/backup ]]; then
         chmod +x /usr/local/sbin/backup
     else
-        log "WARNING" "Skrip backup tidak ditemukan di /usr/local/sbin/backup"
+        log "WARNING" "Backup script not found at /usr/local/sbin/backup"
     fi
     
-    log "SUCCESS" "Crontab berhasil dikonfigurasi"
+    log "SUCCESS" "Crontab configured successfully"
 }
 
-# Konfigurasi rc.local untuk tugas startup
+# Configure rc.local for startup tasks
 setup_rc_local() {
-    log "INFO" "${GEAR} Mengkonfigurasi skrip startup..."
+    log "INFO" "${GEAR} Configuring startup script..."
     
-    # Backup rc.local yang ada
+    # Backup existing rc.local
     [[ -f /etc/rc.local ]] && cp /etc/rc.local /etc/rc.local.backup
     
-    # Buat rc.local yang ditingkatkan
+    # Create  rc.local
     cat > /etc/rc.local << 'EOF'
 #!/bin/bash
-# rc.local - Skrip startup yang ditingkatkan
-# Skrip ini dieksekusi di akhir setiap runlevel multiuser
+# rc.local -  startup script
+# This script is executed at the end of each multiuser runlevel
 
 # Log startup
-echo "[$(date)] Startup sistem dimulai" >> /var/log/startup.log
+echo "[$(date)] System startup initiated" >> /var/log/startup.log
 
-# Tunggu jaringan siap
+# Wait for network to be ready
 sleep 10
 
-# Eksekusi skrip pasca-reboot di background
+# Execute post-reboot script in background
 /bin/bash /root/autoreboot.sh after_reboot &
 
-# Tugas startup tambahan dapat ditambahkan di sini
+# Additional startup tasks can be added here
 
-# Log penyelesaian
-echo "[$(date)] Skrip startup selesai" >> /var/log/startup.log
+# Log completion
+echo "[$(date)] Startup script completed" >> /var/log/startup.log
 
 exit 0
 EOF
     
-    # Buat rc.local dapat dieksekusi
+    # Make rc.local executable
     chmod +x /etc/rc.local
     
-    # Aktifkan layanan rc-local jika ada
+    # Enable rc-local service if it exists
     if systemctl list-unit-files | grep -q rc-local; then
         systemctl enable rc-local
     fi
     
-    log "SUCCESS" "Skrip startup berhasil dikonfigurasi"
+    log "SUCCESS" "Startup script configured successfully"
 }
 
-# Optimisasi sistem dan peningkatan keamanan
+# System optimization and security hardening
 optimize_system() {
-    log "INFO" "${GEAR} Menerapkan optimisasi sistem..."
+    log "INFO" "${GEAR} Applying system optimizations..."
     
-    # Perbarui batas sistem
+    # Update system limits
     cat >> /etc/security/limits.conf << 'EOF'
 
-# Batas Optimisasi VPS
+# VPS Optimization Limits
 * soft nofile 65536
 * hard nofile 65536
 * soft nproc 65536
 * hard nproc 65536
 EOF
     
-    # Optimalkan parameter sysctl
+    # Optimize sysctl parameters
     cat >> /etc/sysctl.conf << 'EOF'
 
-# Optimisasi Jaringan VPS
+# VPS Network Optimizations
 net.core.rmem_max = 16777216
 net.core.wmem_max = 16777216
 net.ipv4.tcp_rmem = 4096 87380 16777216
@@ -602,104 +602,104 @@ net.ipv4.tcp_congestion_control = bbr
 net.core.default_qdisc = fq
 EOF
     
-    # Terapkan pengaturan sysctl
+    # Apply sysctl settings
     sysctl -p >/dev/null 2>&1
     
-    log "SUCCESS" "Optimisasi sistem berhasil diterapkan"
+    log "SUCCESS" "System optimizations applied"
 }
 
-# Verifikasi sistem akhir
+# Final system verification
 verify_setup() {
-    log "INFO" "${GEAR} Melakukan verifikasi akhir..."
+    log "INFO" "${GEAR} Performing final verification..."
     
     local checks_passed=0
     local total_checks=6
     
-    # Cek konfigurasi telegram
+    # Check telegram config
     if [[ -f /etc/telegram_bot/bot_token && -f /etc/telegram_bot/chat_id ]]; then
-        log "SUCCESS" "Konfigurasi Telegram: OK"
+        log "SUCCESS" "Telegram configuration: OK"
         ((checks_passed++))
     else
-        log "ERROR" "Konfigurasi Telegram: GAGAL"
+        log "ERROR" "Telegram configuration: FAILED"
     fi
     
-    # Cek fail2ban
+    # Check fail2ban
     if systemctl is-active --quiet fail2ban; then
-        log "SUCCESS" "Layanan Fail2Ban: OK"
+        log "SUCCESS" "Fail2Ban service: OK"
         ((checks_passed++))
     else
-        log "ERROR" "Layanan Fail2Ban: GAGAL"
+        log "ERROR" "Fail2Ban service: FAILED"
     fi
     
-    # Cek skrip autoreboot
+    # Check autoreboot script
     if [[ -x /root/autoreboot.sh ]]; then
-        log "SUCCESS" "Skrip auto-reboot: OK"
+        log "SUCCESS" "Auto-reboot script: OK"
         ((checks_passed++))
     else
-        log "ERROR" "Skrip auto-reboot: GAGAL"
+        log "ERROR" "Auto-reboot script: FAILED"
     fi
     
-    # Cek crontab
+    # Check crontab
     if crontab -l | grep -q autoreboot.sh; then
-        log "SUCCESS" "Konfigurasi crontab: OK"
+        log "SUCCESS" "Crontab configuration: OK"
         ((checks_passed++))
     else
-        log "ERROR" "Konfigurasi crontab: GAGAL"
+        log "ERROR" "Crontab configuration: FAILED"
     fi
     
-    # Cek rc.local
+    # Check rc.local
     if [[ -x /etc/rc.local ]]; then
-        log "SUCCESS" "Skrip startup: OK"
+        log "SUCCESS" "Startup script: OK"
         ((checks_passed++))
     else
-        log "ERROR" "Skrip startup: GAGAL"
+        log "ERROR" "Startup script: FAILED"
     fi
     
-    # Cek file log
+    # Check log files
     if [[ -f "$LOG_FILE" ]]; then
-        log "SUCCESS" "Sistem logging: OK"
+        log "SUCCESS" "Logging system: OK"
         ((checks_passed++))
     else
-        log "ERROR" "Sistem logging: GAGAL"
+        log "ERROR" "Logging system: FAILED"
     fi
     
-    # Ringkasan
+    # Summary
     local success_rate=$((checks_passed * 100 / total_checks))
     
     echo -e "\n${BOLD}${CYAN}╔══════════════════════════════════════════════════════════════╗${RESET}"
-    echo -e "${BOLD}${CYAN}║                    LAPORAN RINGKASAN SETUP                   ║${RESET}"
+    echo -e "${BOLD}${CYAN}║                    SETUP SUMMARY REPORT                                 ║${RESET}"
     echo -e "${BOLD}${CYAN}╚══════════════════════════════════════════════════════════════╝${RESET}"
-    echo -e "${WHITE}Total Pemeriksaan: ${total_checks}${RESET}"
-    echo -e "${GREEN}Berhasil: ${checks_passed}${RESET}"
-    echo -e "${RED}Gagal: $((total_checks - checks_passed))${RESET}"
-    echo -e "${YELLOW}Tingkat Keberhasilan: ${success_rate}%${RESET}"
-    echo -e "${WHITE}Error yang Ditemui: ${ERROR_COUNT}${RESET}"
+    echo -e "${WHITE}Total Checks: ${total_checks}${RESET}"
+    echo -e "${GREEN}Passed: ${checks_passed}${RESET}"
+    echo -e "${RED}Failed: $((total_checks - checks_passed))${RESET}"
+    echo -e "${YELLOW}Success Rate: ${success_rate}%${RESET}"
+    echo -e "${WHITE}Errors Encountered: ${ERROR_COUNT}${RESET}"
     
     local setup_duration=$(($(date +%s) - SETUP_START_TIME))
-    echo -e "${BLUE}Durasi Setup: ${setup_duration} detik${RESET}"
+    echo -e "${BLUE}Setup Duration: ${setup_duration} seconds${RESET}"
     
     if [[ $success_rate -ge 80 ]]; then
-        log "SUCCESS" "Setup selesai dengan sukses! 🎉"
-        echo -e "\n${GREEN}${SUCCESS} Sistem siap untuk operasi otomatis!${RESET}"
-        echo -e "${YELLOW}${INFO} Anda sekarang dapat me-reboot sistem untuk menguji otomatisasi.${RESET}"
+        log "SUCCESS" "Setup completed successfully! 🎉"
+        echo -e "\n${GREEN}${SUCCESS} System is ready for automated operations!${RESET}"
+        echo -e "${YELLOW}${INFO} You can now reboot the system to test the automation.${RESET}"
     else
-        log "WARNING" "Setup selesai dengan beberapa masalah. Silakan tinjau log."
-        echo -e "\n${YELLOW}${WARNING} Beberapa komponen mungkin memerlukan perhatian manual.${RESET}"
+        log "WARNING" "Setup completed with some issues. Please review the logs."
+        echo -e "\n${YELLOW}${WARNING} Some components may need manual attention.${RESET}"
     fi
 }
 
-# Fungsi pembersihan
+# Cleanup function
 cleanup() {
-    log "INFO" "Melakukan pembersihan..."
+    log "INFO" "Performing cleanup..."
     rm -f /tmp/crontab_backup /tmp/new_crontab
-    log "SUCCESS" "Pembersihan selesai"
+    log "SUCCESS" "Cleanup completed"
 }
 
-# Alur eksekusi utama
+# Main execution flow
 main() {
     show_banner
     
-    # Jalankan langkah-langkah setup
+    # Execute setup steps
     validate_system
     setup_telegram_config
     setup_fail2ban
@@ -710,21 +710,22 @@ main() {
     verify_setup
     cleanup
     
-    echo -e "\n${BOLD}${GREEN}${ROCKET} Setup Otomatisasi VPS Profesional Selesai! ${ROCKET}${RESET}"
-    echo -e "${CYAN}Terima kasih telah menggunakan solusi otomatisasi premium kami.${RESET}"
-    echo -e "${WHITE}Lokasi file log: ${LOG_FILE}${RESET}"
+    echo -e "\n${BOLD}${GREEN}${ROCKET} VPS Automation Setup Complete! ${ROCKET}${RESET}"
+    echo -e "${CYAN}Thank you for using our premium automation solution.${RESET}"
+    echo -e "${WHITE}Log file location: ${LOG_FILE}${RESET}"
     
-    # Konfirmasi akhir
-    echo -e "\n${YELLOW}Apakah Anda ingin reboot sekarang untuk mengaktifkan semua layanan? [y/N]: ${RESET}"
+    # Final confirmation
+    echo -e "\n${YELLOW}Would you like to reboot now to activate all services? [y/N]: ${RESET}"
     read -r reboot_choice
     if [[ $reboot_choice =~ ^[Yy]$ ]]; then
-        log "INFO" "Memulai reboot segera..."
+        log "INFO" "Initiating immediate reboot..."
         sleep 3
         reboot
     else
-        log "INFO" "Setup selesai. Reboot kapan saja untuk mengaktifkan semua fitur."
+        log "INFO" "Setup complete. Reboot when convenient to activate all features."
     fi
 }
 
-# Jalankan fungsi utama
+# Execute main function
 main "$@"
+
