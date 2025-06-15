@@ -177,8 +177,9 @@ setup_telegram_config() {
     
     # Get bot token securely
     secure_input "Enter your Telegram Bot Token: " "BOT_TOKEN" "true"
-    secure_input "Enter your Telegram Chat ID: " "CHAT_ID"
-    
+    secure_input "Enter your Telegram Chat ID (for personal logs): " "CHAT_ID"
+    secure_input "Enter your Telegram Chat ID for reboot notification (channel): " "CHAT_ID_NOTIF_REBOOT"
+
     # Validate token format (basic validation)
     if [[ ! "$BOT_TOKEN" =~ ^[0-9]+:[A-Za-z0-9_-]+$ ]]; then
         log "WARNING" "Bot token format seems incorrect, but proceeding..."
@@ -187,11 +188,13 @@ setup_telegram_config() {
     # Write configuration files
     echo "$BOT_TOKEN" > /etc/telegram_bot/bot_token
     echo "$CHAT_ID" > /etc/telegram_bot/chat_id
-    
+    echo "$CHAT_ID_NOTIF_REBOOT" > /etc/telegram_bot/chat_id_notifreboot
+
     # Set secure permissions
     chmod 600 /etc/telegram_bot/bot_token
     chmod 600 /etc/telegram_bot/chat_id
-    
+    chmod 600 /etc/telegram_bot/chat_id_notifreboot
+
     # Test telegram connectivity
     if curl -s "https://api.telegram.org/bot$BOT_TOKEN/getMe" | grep -q '"ok":true'; then
         log "SUCCESS" "Telegram bot configuration verified"
@@ -259,7 +262,7 @@ create_autoreboot_script() {
     cat > /root/autoreboot.sh << 'EOF'
 #!/bin/bash
 
-#  Auto-Reboot Script with  Features
+#  Auto-Reboot Script with Channel Notification
 # Version: 1.0
 
 # Color definitions
@@ -271,7 +274,7 @@ RESET='\033[0m'
 
 # Configuration
 BOT_TOKEN=$(cat /etc/telegram_bot/bot_token 2>/dev/null)
-CHAT_ID=$(cat /etc/telegram_bot/chat_id 2>/dev/null)
+CHAT_ID_NOTIF_REBOOT=$(cat /etc/telegram_bot/chat_id_notifreboot 2>/dev/null)
 LOG_FILE="/var/log/autoreboot.log"
 
 # System information gathering
@@ -290,11 +293,10 @@ log_message() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
 }
 
-#  service check with timeout
+# Service check with timeout
 check_service() {
     local service=$1
     local timeout=${2:-10}
-    
     if timeout $timeout systemctl is-active --quiet "$service" 2>/dev/null; then
         echo "✅"
     else
@@ -305,17 +307,18 @@ check_service() {
 # Send telegram message with retry mechanism
 send_telegram() {
     local message="$1"
+    local chat_id="$2"
     local max_retries=3
     local retry_count=0
-    
-    if [[ -z "$BOT_TOKEN" || -z "$CHAT_ID" ]]; then
+
+    if [[ -z "$BOT_TOKEN" || -z "$chat_id" ]]; then
         log_message "ERROR: Telegram credentials not found"
         return 1
     fi
-    
+
     while [[ $retry_count -lt $max_retries ]]; do
         if curl -s -m 30 -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
-            -d chat_id="$CHAT_ID" \
+            -d chat_id="$chat_id" \
             -d text="$message" \
             -d parse_mode=Markdown > /dev/null 2>&1; then
             log_message "SUCCESS: Telegram message sent"
@@ -326,7 +329,7 @@ send_telegram() {
             sleep 5
         fi
     done
-    
+
     log_message "ERROR: Failed to send telegram message after $max_retries attempts"
     return 1
 }
@@ -335,7 +338,6 @@ send_telegram() {
 restart_service() {
     local service=$1
     log_message "Restarting $service..."
-    
     if systemctl restart "$service" 2>/dev/null; then
         log_message "SUCCESS: $service restarted"
         return 0
@@ -348,10 +350,8 @@ restart_service() {
 # Post-reboot operations
 if [[ "$1" == "after_reboot" ]]; then
     log_message "=== POST-REBOOT OPERATIONS STARTED ==="
-    
-    # Wait for system to stabilize
     sleep 15
-    
+
     # Restart critical services
     services=(
         "ssh"
@@ -366,7 +366,7 @@ if [[ "$1" == "after_reboot" ]]; then
         "udp-mini-2"
         "udp-mini-3"
     )
-    
+
     for service in "${services[@]}"; do
         if systemctl list-unit-files | grep -q "$service"; then
             restart_service "$service"
@@ -374,8 +374,8 @@ if [[ "$1" == "after_reboot" ]]; then
             log_message "INFO: Service $service not found, skipping"
         fi
     done
-    
-    # Additional service operations for UDP services
+
+    # Additional operations for UDP services
     for i in {1..3}; do
         service="udp-mini-$i"
         if systemctl list-unit-files | grep -q "$service"; then
@@ -385,7 +385,7 @@ if [[ "$1" == "after_reboot" ]]; then
             systemctl start "$service" 2>/dev/null
         fi
     done
-    
+
     # Check all service statuses
     STATUS_SSH=$(check_service ssh)
     STATUS_NGINX=$(check_service nginx)
@@ -398,13 +398,13 @@ if [[ "$1" == "after_reboot" ]]; then
     STATUS_UDP1=$(check_service udp-mini-1)
     STATUS_UDP2=$(check_service udp-mini-2)
     STATUS_UDP3=$(check_service udp-mini-3)
-    
+
     # System resource check
     UPTIME=$(uptime -p)
     LOAD_AVG=$(cat /proc/loadavg | awk '{print $1" "$2" "$3}')
     MEMORY_USAGE=$(free | grep Mem | awk '{printf "%.1f%%", $3/$2 * 100.0}')
     DISK_USAGE=$(df -h / | awk 'NR==2{printf "%s", $5}')
-    
+
     # Compose post-reboot message
     POST_MESSAGE="🎯 **SYSTEM REBOOT COMPLETED** 🎯
 
@@ -450,8 +450,8 @@ if [[ "$1" == "after_reboot" ]]; then
 ╚══════════════════╝
 🤖 **Automated by:** @fadzdigital
 ✅ **Status:** All systems operational"
-    
-    send_telegram "$POST_MESSAGE"
+
+    send_telegram "$POST_MESSAGE" "$CHAT_ID_NOTIF_REBOOT"
     log_message "=== POST-REBOOT OPERATIONS COMPLETED ==="
     exit 0
 fi
@@ -481,7 +481,7 @@ PRE_MESSAGE="⚠️ **SCHEDULED SYSTEM REBOOT** ⚠️
 
 🤖 **Automated by:** @fadzdigital"
 
-send_telegram "$PRE_MESSAGE"
+send_telegram "$PRE_MESSAGE" "$CHAT_ID_NOTIF_REBOOT"
 
 # Wait before rebooting
 log_message "Waiting 30 seconds before reboot..."
