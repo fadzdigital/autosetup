@@ -1,1 +1,1 @@
-      cd autosetup && chmod +x * && bash setup.sh ```
+      cd autosetup && chmod +x * && bash setup.sh
